@@ -1,0 +1,161 @@
+{
+  "rules" : {
+    
+    // ------------------------------------------------------------------------------------------------------------------------
+    // Settings and Admin
+    
+    "admin": {
+      ".read": true,
+      ".write": false
+    },
+    
+    "settings": {
+      ".read": true,
+      ".write": "auth !== null && auth.uid === root.child('admin').val()"
+    },
+    
+    // ------------------------------------------------------------------------------------------------------------------------
+    // Users and Profiles
+    
+    "users": {
+      "$uid": {
+        // grants write access to the owner of this user account whose uid must exactly match the key ($uid)
+        ".write": "auth !== null && auth.uid === $uid",
+        ".read": true
+      }
+    },
+    
+    "usernames": {
+      "$userName": {
+        // grants write access to the owner of this user account whose uid must exactly match the key ($uid)
+        ".write": "root.child('usernames').child($userName).child('uid').val() == auth.uid || root.child('usernames').child($userName).child('uid').val() == null",
+        // grants read access to any user who is logged in --&& auth.provider === 'password'
+        ".read": "auth !== null"
+      }
+    },
+    
+    // ------------------------------------------------------------------------------------------------------------------------
+    // Browsing and Products
+    "wallet": {
+      "$uid": {
+        // grants write access to the owner of this user account whose uid must exactly match the key ($uid)
+        ".write": "auth !== null && auth.uid === $uid",
+        // grants read access to any user who is logged in --&& auth.provider === 'password'
+        ".read": "auth !== null"
+      }
+    },
+    
+    "products_tags": {
+      "$method": {
+        "$tag": {
+          "$productId": {
+            "timestamp_creation": {
+              ".write": "auth !== null 
+                      && (root.child('products_meta').child($productId).child('userId').val() === auth.uid
+                      || root.child('products_tags').child($method).child($tag).child($productId).val() === null
+                      || auth.uid == root.child('admin').val())",
+              ".read": true
+            },
+            "timestamp_update": {
+              ".write": "auth !== null 
+                      && (root.child('products_meta').child($productId).child('userId').val() === auth.uid
+                      || root.child('products_tags').child($method).child($tag).child($productId).val() === null
+                      || auth.uid == root.child('admin').val())",
+              ".read": true
+            },
+            ".read": "auth !== null",   // can write all other properties if authenticated (not the safest method though)
+            ".write": true,
+            ".indexOn": "timestamp_creation"
+          }, // productId
+          ".read": true,
+          ".indexOn": "timestamp_creation"
+        }, // tag
+        ".read": true
+      }, // method
+      ".read": true 
+    },
+    
+    "products_meta": {
+      "$productId": {
+        ".write": "auth !== null 
+                      && (root.child('products_meta').child($productId).child('userId').val() === auth.uid 
+                      || root.child('products_meta').child($productId).val() === null
+                      || auth.uid == root.child('admin').val())",
+        ".read": true
+      },
+      ".read": true,
+      ".indexOn": "timestamp_creation"
+    },
+    "products_images": {
+      "$productId": {
+        ".write": "auth !== null 
+                      && (root.child('products_meta').child($productId).child('userId').val() === auth.uid 
+                      || root.child('products_meta').child($productId).val() === null
+                      || auth.uid == root.child('admin').val())",
+        ".read": true
+      },
+      ".read": true
+    },
+    
+    // ------------------------------------------------------------------------------------------------------------------------
+    // Product Interaction
+    
+    "products_comments": {
+      ".write": "auth !== null",
+      ".read": true
+    },
+    
+    "products_ratings": {
+      "$productId": {
+        "$uid": {
+          // prevent user upvoting its own product
+          ".write": "auth !== null && root.child('products_meta').child($productId).child('userId').val() != auth.uid",
+          ".read": true
+        },
+        ".read": true
+      },
+      ".read": true
+    },
+    
+    // ------------------------------------------------------------------------------------------------------------------------
+    // Payments and Orders
+    
+    "orders": {
+      "$uid": {
+        "$orderId": {
+          ".write": "auth !== null && auth.uid === $uid || root.child('orders').child($uid).child($orderId).val() === null",
+          ".read": "(auth !== null && auth.uid === $uid) || (auth.uid === root.child('admin').val())"
+        },
+        ".read": "(auth !== null && auth.uid === $uid) || (auth.uid === root.child('admin').val())"
+      },
+      ".read": "(auth !== null && auth.uid === root.child('admin').val())"
+    },
+    
+    // -----------------
+    "invoices": {
+      "$uid": {
+        "$orderId": {
+          ".write": "auth !== null && auth.uid === $uid || root.child('invoices').child($uid).child($orderId).val() === null",
+          ".read": "(auth !== null && auth.uid === $uid) || (auth.uid === root.child('admin').val())"
+        },
+        ".read": "(auth !== null && auth.uid === $uid) || (auth.uid === root.child('admin').val())"
+      },
+      ".read": "(auth !== null && auth.uid === root.child('admin').val())"
+    },
+    
+    // -----------------
+    // used to determine whether user has bought a certain item and is allowed to rate it
+    "purchases": {
+      "$productId": {
+        "$uid": {
+          ".write": "auth !== null && auth.uid === $uid || root.child('purchases').child($productId).child($uid).val() === null",
+          ".read": true
+        },
+        ".read": true
+      },
+      ".read": true
+    }
+    
+    
+  }
+}
